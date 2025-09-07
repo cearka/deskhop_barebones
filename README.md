@@ -14,7 +14,9 @@ I haven't uploaded the code yet, will will do so soon.  Main differences:
 - Removed update mode features too because I broke it and couldn't figure out how to get it to work again.  you can just update with the button for bootloader
 - Modified the top of the case so you can actually access that button.
 - Basically, the only purpose of this device is now to switch computers on a hotkey (pause, and it intercepts it so it never reaches the system), being instantaneous and not disconnecting and giving you that stupid disconnect sound.
+- the **firmware** is **available** .  updated src code will come later.
 
+   
 # DeskHop - Fast Desktop Switching
 
 Did you ever notice how, in the crazy world of tech, there's always that one quirky little project trying to solve a problem so niche that its only competitors might be a left-handed screwdriver and a self-hiding alarm clock?
