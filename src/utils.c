@@ -110,10 +110,6 @@ void save_config(device_t *state) {
     write_flash_page((uint32_t)ADDR_CONFIG - XIP_BASE, state->page_buffer);
 }
 
-void reset_config_timer(device_t *state) {
-    /* Once this is reached, we leave the config mode */
-    state->config_mode_timer = time_us_64() + CONFIG_MODE_TIMEOUT;
-}
 
 void _configure_flash_cs(enum gpio_override gpo, uint pin_index) {
   hw_write_masked(&ioqspi_hw->io[pin_index].ctrl,
@@ -139,15 +135,6 @@ bool is_bootsel_pressed(void) {
   return button_pressed;
 }
 
-void request_byte(device_t *state, uint32_t address) {
-    uart_packet_t packet = {
-        .data32[0] = address,
-        .type = REQUEST_BYTE_MSG,
-    };
-    state->fw.byte_done = false;
-
-    queue_try_add(&global_state.uart_tx_queue, &packet);
-}
 
 void reboot(void) {
     *((volatile uint32_t*)(PPB_BASE + 0x0ED0C)) = 0x5FA0004;
@@ -209,29 +196,7 @@ bool validate_packet(uart_packet_t *packet) {
     return false;
 }
 
-
-/* ================================================== *
- * Debug functions
- * ================================================== */
-#ifdef DH_DEBUG
-
-int dh_debug_printf(const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    char buffer[512];
-
-    int string_len = vsnprintf(buffer, 512, format, args);
-
-    tud_cdc_n_write(0, buffer, string_len);
-    tud_cdc_write_flush();
-
-    va_end(args);
-    return string_len;
-}
-#else
-
+/* Stub for external libraries that call debug printf */
 int dh_debug_printf(const char *format, ...) {
     return 0;
 }
-
-#endif
