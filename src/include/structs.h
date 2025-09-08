@@ -40,12 +40,6 @@ typedef struct TU_ATTR_PACKED {
     uint8_t mode;
 } mouse_report_t;
 
-typedef struct {
-    uint8_t tip_pressure;
-    uint8_t buttons; // Digitizer buttons
-    uint16_t x;      // X coordinate (0-32767)
-    uint16_t y;      // Y coordinate (0-32767)
-} touch_report_t;
 
 typedef struct {
     uint8_t instance;
@@ -74,10 +68,8 @@ typedef struct {
 
     uint8_t kbd_led_as_indicator;
     uint8_t hotkey_toggle;
-    uint8_t enable_acceleration;
 
     uint8_t enforce_ports;
-    uint16_t jump_threshold;
 
     output_t output[NUM_SCREENS];
     uint32_t _reserved;
@@ -104,8 +96,6 @@ typedef struct {
     hid_keyboard_report_t remote_kbd_state;              // Store combined remote keyboard state
     uint8_t max_kbd_idx;                                 // Store largest kbd_idx seen
 
-    int16_t pointer_x; // Store and update the location of our mouse pointer
-    int16_t pointer_y;
     int16_t mouse_buttons; // Store and update the state of mouse buttons
 
     config_t config;       // Device configuration, loaded from flash or defaults used
@@ -127,7 +117,6 @@ typedef struct {
     fw_upgrade_state_t fw;           // State of the firmware upgrader
     firmware_metadata_t _running_fw; // RAM copy of running fw metadata
     bool reboot_requested;           // If set, stop updating watchdog
-    uint64_t config_mode_timer;      // Counts how long are we to remain in config mode
 
     uint8_t page_buffer[FLASH_PAGE_SIZE]; // For firmware-over-serial upgrades
 
@@ -136,13 +125,9 @@ typedef struct {
     bool keyboard_connected; // True when our keyboard is connected locally
 
     /* Feature flags */
-    bool mouse_zoom;         // True when "mouse zoom" is enabled
-    bool switch_lock;        // True when device is prevented from switching
     bool onboard_led_state;  // True when LED is ON
     bool relative_mouse;     // True when relative mouse mode is used
     bool gaming_mode;        // True when gaming mode is on (relative passthru + lock)
-    bool config_mode_active; // True when config mode is active
-    bool digitizer_active;   // True when digitizer Win/Mac workaround is active
 
     /* Onboard LED blinky (provide feedback when e.g. mouse connected) */
     int32_t blinks_left;     // How many blink transitions are left
@@ -160,25 +145,10 @@ typedef struct {
 
 enum os_type_e {
     LINUX   = 1,
-    MACOS   = 2,
     WINDOWS = 3,
-    ANDROID = 4,
-    OTHER   = 255,
 };
 
-enum screen_pos_e {
-    NONE   = 0,
-    LEFT   = 1,
-    RIGHT  = 2,
-    MIDDLE = 3,
-};
 
-enum screensaver_mode_e {
-    DISABLED   = 0,
-    PONG       = 1,
-    JITTER     = 2,
-    MAX_SS_VAL = JITTER,
-};
 
 extern const config_t default_config;
 extern const config_t ADDR_CONFIG[];
