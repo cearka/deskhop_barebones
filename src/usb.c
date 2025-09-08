@@ -41,10 +41,6 @@ void tud_hid_set_report_cb(uint8_t instance,
 
     /* We received a report on the config report ID */
     if (instance == ITF_NUM_HID_VENDOR && report_id == REPORT_ID_VENDOR) {
-        /* Security - only if config mode is enabled are we allowed to do anything. While the report_id
-           isn't even advertised when not in config mode, security must always be explicit and never assume */
-        if (!global_state.config_mode_active)
-            return;
 
         /* We insist on a fixed size packet. No overflows. */
         if (bufsize != RAW_PACKET_LENGTH)
