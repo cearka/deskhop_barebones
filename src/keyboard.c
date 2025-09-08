@@ -15,94 +15,8 @@
  * Hotkeys to trigger actions via the keyboard.
  * ==================================================== */
 
-hotkey_combo_t hotkeys[] = {
-    /* Main keyboard switching hotkey */
-    {.modifier       = HOTKEY_MODIFIER,
-     .keys           = {HOTKEY_TOGGLE},
-     .key_count      = 1,
-     .pass_to_os     = false,
-     .action_handler = &output_toggle_hotkey_handler},
-
-    /* Pressing right ALT + right CTRL toggles the slow mouse mode */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTALT | KEYBOARD_MODIFIER_RIGHTCTRL,
-     .keys           = {},
-     .key_count      = 0,
-     .pass_to_os     = true,
-     .acknowledge    = true,
-     .action_handler = &mouse_zoom_hotkey_handler},
-
-    /* Switch lock */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTCTRL,
-     .keys           = {HID_KEY_K},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &switchlock_hotkey_handler},
-
-    /* Screen lock */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTCTRL,
-     .keys           = {HID_KEY_L},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &screenlock_hotkey_handler},
-
-    /* Toggle gaming mode */
-    {.modifier       = KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_RIGHTSHIFT,
-     .keys           = {HID_KEY_G},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &toggle_gaming_mode_handler},
-
-    /* Enable screensaver for active output */
-    {.modifier       = KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_RIGHTSHIFT,
-     .keys           = {HID_KEY_S},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &enable_screensaver_hotkey_handler},
-
-    /* Disable screensaver for active output */
-    {.modifier       = KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_RIGHTSHIFT,
-     .keys           = {HID_KEY_X},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &disable_screensaver_hotkey_handler},
-
-    /* Erase stored config */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTSHIFT,
-     .keys           = {HID_KEY_F12, HID_KEY_D},
-     .key_count      = 2,
-     .acknowledge    = true,
-     .action_handler = &wipe_config_hotkey_handler},
-
-    /* Record switch y coordinate  */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTSHIFT,
-     .keys           = {HID_KEY_F12, HID_KEY_Y},
-     .key_count      = 2,
-     .acknowledge    = true,
-     .action_handler = &screen_border_hotkey_handler},
-
-    /* Switch to configuration mode  */
-    {.modifier       = KEYBOARD_MODIFIER_LEFTCTRL | KEYBOARD_MODIFIER_RIGHTSHIFT,
-     .keys           = {HID_KEY_C, HID_KEY_O},
-     .key_count      = 2,
-     .acknowledge    = true,
-     .action_handler = &config_enable_hotkey_handler},
-
-    /* Hold down left shift + right shift + F12 + A ==> firmware upgrade mode for board A (kbd) */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTSHIFT | KEYBOARD_MODIFIER_LEFTSHIFT,
-     .keys           = {HID_KEY_A},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &fw_upgrade_hotkey_handler_A},
-
-    /* Hold down left shift + right shift + F12 + B ==> firmware upgrade mode for board B (mouse) */
-    {.modifier       = KEYBOARD_MODIFIER_RIGHTSHIFT | KEYBOARD_MODIFIER_LEFTSHIFT,
-     .keys           = {HID_KEY_B},
-     .key_count      = 1,
-     .acknowledge    = true,
-     .action_handler = &fw_upgrade_hotkey_handler_B}};
-
 /* ============================================================ *
- * Detect if any hotkeys were pressed
+ * Key detection utilities
  * ============================================================ */
 
 /* Tries to find if the keyboard report contains key, returns true/false */
@@ -112,35 +26,12 @@ bool key_in_report(uint8_t key, const hid_keyboard_report_t *report) {
             return true;
         }
     }
-
     return false;
 }
 
-/* Check if the current report matches a specific hotkey passed on */
-bool check_specific_hotkey(hotkey_combo_t keypress, const hid_keyboard_report_t *report) {
-    /* We expect all modifiers specified to be detected in the report */
-    if (keypress.modifier != (report->modifier & keypress.modifier))
-        return false;
-
-    for (int n = 0; n < keypress.key_count; n++) {
-        if (!key_in_report(keypress.keys[n], report)) {
-            return false;
-        }
-    }
-
-    /* Getting here means all of the keys were found. */
-    return true;
-}
-
-/* Go through the list of hotkeys, check if any of them match. */
-hotkey_combo_t *check_all_hotkeys(hid_keyboard_report_t *report, device_t *state) {
-    for (int n = 0; n < ARRAY_SIZE(hotkeys); n++) {
-        if (check_specific_hotkey(hotkeys[n], report)) {
-            return &hotkeys[n];
-        }
-    }
-
-    return NULL;
+/* Check if F17 key is pressed for output switching */
+bool check_f17_hotkey(const hid_keyboard_report_t *report) {
+    return key_in_report(HOTKEY_TOGGLE, report);
 }
 
 /* ==================================================== *
@@ -287,7 +178,6 @@ void send_system_control(uint8_t *raw_report, device_t *state) {
 void process_keyboard_report(uint8_t *raw_report, int length, uint8_t itf, hid_interface_t *iface) {
     hid_keyboard_report_t new_report = {0};
     device_t *state                  = &global_state;
-    hotkey_combo_t *hotkey           = NULL;
 
     if (length < KBD_REPORT_LENGTH)
         return;
@@ -301,21 +191,11 @@ void process_keyboard_report(uint8_t *raw_report, int length, uint8_t itf, hid_i
     /* Update the keyboard state for this device */
     update_kbd_state(state, &new_report, itf);
 
-    /* Check if any hotkey was pressed */
-    hotkey = check_all_hotkeys(&new_report, state);
-
-    /* ... and take appropriate action */
-    if (hotkey != NULL) {
-        /* Provide visual feedback we received the action */
-        if (hotkey->acknowledge)
-            blink_led(state);
-
-        /* Execute the corresponding handler */
-        hotkey->action_handler(state, &new_report);
-
-        /* And pass the key to the output PC if configured to do so. */
-        if (!hotkey->pass_to_os)
-            return;
+    /* Check if F17 hotkey was pressed for output switching */
+    if (check_f17_hotkey(&new_report)) {
+        /* Execute the output toggle handler and don't pass key to OS */
+        output_toggle_hotkey_handler(state, &new_report);
+        return;
     }
 
     /* This method will decide if the key gets queued locally or sent through UART */
