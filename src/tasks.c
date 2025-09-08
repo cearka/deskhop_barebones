@@ -53,105 +53,10 @@ void usb_host_task(device_t *state) {
         tuh_task();
 }
 
-mouse_report_t *screensaver_pong(device_t *state) {
-    static mouse_report_t report = {0};
-    static int dx = 20, dy = 25;
-
-    /* Check if we are bouncing off the walls and reverse direction in that case. */
-    if (report.x + dx < MIN_SCREEN_COORD || report.x + dx > MAX_SCREEN_COORD)
-        dx = -dx;
-
-    if (report.y + dy < MIN_SCREEN_COORD || report.y + dy > MAX_SCREEN_COORD)
-        dy = -dy;
-
-    report.x += dx;
-    report.y += dy;
-
-    return &report;
-}
-
-mouse_report_t *screensaver_jitter(device_t *state) {
-    static mouse_report_t report = {
-        .y = JITTER_DISTANCE,
-        .mode = RELATIVE,
-    };
-    report.y = -report.y;
-
-    return &report;
-}
-
-/* Have something fun and entertaining when idle. */
-void screensaver_task(device_t *state) {
-    const uint32_t delays[] = {
-        0,        /* DISABLED, unused index 0 */
-        5000,     /* PONG, move mouse every 5 ms for a high framerate */
-        10000000, /* JITTER, once every 10 sec is more than enough */
-    };
-    static int last_pointer_move = 0;
-    screensaver_t *screensaver = &state->config.output[BOARD_ROLE].screensaver;
-    uint64_t inactivity_period = time_us_64() - state->last_activity[BOARD_ROLE];
-
-    /* If we're not enabled, nothing to do here. */
-    if (screensaver->mode == DISABLED)
-        return;
-
-    /* System is still not idle for long enough to activate or screensaver mode is not supported */
-    if (inactivity_period < screensaver->idle_time_us || screensaver->mode > MAX_SS_VAL)
-        return;
-
-    /* We exceeded the maximum permitted screensaver runtime */
-    if (screensaver->max_time_us
-        && inactivity_period > (screensaver->max_time_us + screensaver->idle_time_us))
-        return;
-
-    /* If we're the selected output and we can only run on inactive output, nothing to do here. */
-    if (screensaver->only_if_inactive && CURRENT_BOARD_IS_ACTIVE_OUTPUT)
-        return;
-
-    /* We're active! Now check if it's time to move the cursor yet. */
-    if (time_us_32() - last_pointer_move < delays[screensaver->mode])
-        return;
-
-    /* Return, if we're not connected or the host is suspended */
-    if(!tud_ready()) {
-        return;
-    }
-
-    mouse_report_t *report;
-    switch (screensaver->mode) {
-        case PONG:
-            report = screensaver_pong(state);
-            break;
-
-        case JITTER:
-            report = screensaver_jitter(state);
-            break;
-
-        default:
-            return;
-    }
-
-    /* Move mouse pointer */
-    queue_mouse_report(report, state);
-
-    /* Update timer of the last pointer move */
-    last_pointer_move = time_us_32();
-}
 
 /* Periodically emit heartbeat packets */
 void heartbeat_output_task(device_t *state) {
-    /* If firmware upgrade is in progress, don't touch flash_cs */
-    if (state->fw.upgrade_in_progress)
-        return;
 
-    if (state->config_mode_active) {
-        /* Leave config mode if timeout expired and user didn't click exit */
-        if (time_us_64() > state->config_mode_timer)
-            reboot();
-
-        /* Keep notifying the user we're still in config mode */
-        blink_led(state);
-    }
 
 #ifdef DH_DEBUG
     /* Holding the button invokes bootsel firmware upgrade */
@@ -189,40 +94,6 @@ void process_hid_queue_task(device_t *state) {
         queue_try_remove(&state->hid_queue_out, &packet);
 }
 
-/* Task that handles copying firmware from the other device to ours */
-void firmware_upgrade_task(device_t *state) {
-    if (!state->fw.upgrade_in_progress || !state->fw.byte_done)
-        return;
-
-    if (queue_is_full(&state->uart_tx_queue))
-        return;
-
-    /* End condition, when reached the process is completed. */
-    if (state->fw.address > STAGING_IMAGE_SIZE) {
-        state->fw.upgrade_in_progress = 0;
-        state->fw.checksum = ~state->fw.checksum;
-
-        /* Checksum mismatch, we wipe the stage 2 bootloader and rely on ROM recovery */
-        if(calculate_firmware_crc32() != state->fw.checksum) {
-            flash_range_erase((uint32_t)ADDR_FW_RUNNING - XIP_BASE, FLASH_SECTOR_SIZE);
-            reset_usb_boot(1 << PICO_DEFAULT_LED_PIN, 0);
-        }
-
-        else {
-            state->_running_fw = _firmware_metadata;
-            global_state.reboot_requested = true;
-        }
-    }
-
-    /* If we're on the last element of the current page, page is done - write it. */
-    if (TU_U32_BYTE0(state->fw.address) == 0x00) {
-
-        uint32_t page_start_addr = (state->fw.address - 1) & 0xFFFFFF00;
-        write_flash_page((uint32_t)ADDR_FW_RUNNING + page_start_addr - XIP_BASE, state->page_buffer);
-    }
-
-    request_byte(state, state->fw.address);
-}
 
 void packet_receiver_task(device_t *state) {
     uint32_t current_pointer
