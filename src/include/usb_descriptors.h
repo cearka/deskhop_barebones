@@ -7,195 +7,125 @@
  * the Free Software Foundation, version 3.
  *
  * See the file LICENSE for the full license text.
- */
+ *
+ **===================================================== *
+ * ==========  Keyboard LED Output Indicator  ========== *
+ * ===================================================== *
+ *
+ * If you are willing to give up on using the keyboard LEDs for their original purpose,
+ * you can use them as a convenient way to indicate which output is selected.
+ *
+ * KBD_LED_AS_INDICATOR set to 0 will use the keyboard LEDs as normal.
+ * KBD_LED_AS_INDICATOR set to 1 will use the Caps Lock LED as indicator.
+ *
+ * */
 
-#ifndef USB_DESCRIPTORS_H_
-#define USB_DESCRIPTORS_H_
+#define KBD_LED_AS_INDICATOR 0
 
-// Interface 0
-#define REPORT_ID_KEYBOARD 1
-#define REPORT_ID_MOUSE    2
-#define REPORT_ID_CONSUMER 3
-#define REPORT_ID_SYSTEM   4
+/**===================================================== *
+ * ===========  Hotkey for output switching  =========== *
+ * ===================================================== *
+ *
+ * Everyone is different, I prefer to use caps lock because I HATE SHOUTING :)
+ * You might prefer something else. Pick something from the list found at:
+ *
+ * https://github.com/hathach/tinyusb/blob/master/src/class/hid/hid.h
+ *
+ * defined as HID_KEY_<something>
+ *
+ * In addition, there is an optional modifier you can use for the hotkey
+ * switching. Currently, it's set to LEFT CTRL, you can change it by
+ * redefining HOTKEY_MODIFIER here from KEYBOARD_MODIFIER_LEFTCTRL to something
+ * else (check file referenced below) or HID_KEY_NONE.
+ *
+ * If you do not want to use a key for switching outputs, you may be tempted
+ * to select HID_KEY_NONE here as well; don't do that! That code appears in many
+ * HID messages and the result will be a non-functional keyboard. Instead, choose
+ * a key that is unlikely to ever appear on a keyboard that you will use.
+ * HID_KEY_F24 is probably a good choice as keyboards with 24 function keys
+ * are rare.
+ *
+ * */
 
-// Interface 1
-#define REPORT_ID_RELMOUSE  5
-#define REPORT_ID_DIGITIZER 7
+#define HOTKEY_MODIFIER  0
+#define HOTKEY_TOGGLE    HID_KEY_PAUSE
+// #define HOTKEY_TOGGLE    HID_KEY_F17
 
-// Interface 2
-#define REPORT_ID_VENDOR 6
+/**================================================== *
+ * ==============  Mouse Speed Factor  ============== *
+ * ================================================== *
+ *
+ * This affects how fast the mouse moves.
+ *
+ * MOUSE_SPEED_A_FACTOR_X: [1-128], mouse moves at this speed in X direction
+ * MOUSE_SPEED_A_FACTOR_Y: [1-128], mouse moves at this speed in Y direction
+ *
+ * JUMP_THRESHOLD: [0-32768], sets the "force" you need to use to drag the
+ * mouse to another screen, 0 meaning no force needed at all, and ~500 some force
+ * needed, ~1000 no accidental jumps, you need to really mean it.
+ *
+ * This is now configurable per-screen.
+ *
+ * ENABLE_ACCELERATION: [0-1], disables or enables mouse acceleration.
+ *
+ * */
+
+/* Output A values, default is for the most common ~ 16:9 ratio screen */
+#define MOUSE_SPEED_A_FACTOR_X 16
+#define MOUSE_SPEED_A_FACTOR_Y 28
+
+/* Output B values, default is for the most common ~ 16:9 ratio screen */
+#define MOUSE_SPEED_B_FACTOR_X 16
+#define MOUSE_SPEED_B_FACTOR_Y 28
 
 
-#define DEVICE_DESCRIPTOR(vid, pid) \
-{.bLength         = sizeof(tusb_desc_device_t),\
-  .bDescriptorType = TUSB_DESC_DEVICE,\
-  .bcdUSB          = 0x0200,\
-  .bDeviceClass    = 0x00,\
-  .bDeviceSubClass = 0x00,\
-  .bDeviceProtocol = 0x00,\
-  .bMaxPacketSize0 = CFG_TUD_ENDPOINT0_SIZE,\
-  .idVendor  = vid,\
-  .idProduct = pid,\
-  .bcdDevice = 0x0100,\
-  .iManufacturer = 0x01,\
-  .iProduct      = 0x02,\
-  .iSerialNumber = 0x03,\
-  .bNumConfigurations = 0x01}\
 
-/* Common mouse descriptor. Use HID_RELATIVE or HID_ABSOLUTE for ABS_OR_REL. */
-#define TUD_HID_REPORT_DESC_MOUSE_COMMON(ABS_OR_REL, MOUSE_MIN, ...)\
-  HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP      )                   ,\
-  HID_USAGE      ( HID_USAGE_DESKTOP_MOUSE     )                   ,\
-  HID_COLLECTION ( HID_COLLECTION_APPLICATION  )                   ,\
-    /* Report ID if any */\
-    __VA_ARGS__ \
-    HID_USAGE      ( HID_USAGE_DESKTOP_POINTER )                   ,\
-    HID_COLLECTION ( HID_COLLECTION_PHYSICAL   )                   ,\
-      HID_USAGE_PAGE  ( HID_USAGE_PAGE_BUTTON  )                   ,\
-        HID_USAGE_MIN   ( 1                                      ) ,\
-        HID_USAGE_MAX   ( 8                                      ) ,\
-        HID_LOGICAL_MIN ( 0                                      ) ,\
-        HID_LOGICAL_MAX ( 1                                      ) ,\
-        \
-        /* Left, Right, Mid, Back, Forward buttons + 3 extra */     \
-        HID_REPORT_COUNT( 8                                      ) ,\
-        HID_REPORT_SIZE ( 1                                      ) ,\
-        HID_INPUT       ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE ) ,\
-        \
-      HID_USAGE_PAGE  ( HID_USAGE_PAGE_DESKTOP )                   ,\
-        \
-        /* X, Y position [MOUSE_MIN, 32767] */ \
-        HID_USAGE       ( HID_USAGE_DESKTOP_X                    ) ,\
-        HID_USAGE       ( HID_USAGE_DESKTOP_Y                    ) ,\
-        MOUSE_MIN                                                  ,\
-        HID_LOGICAL_MAX_N( 0x7FFF, 2                             ) ,\
-        HID_REPORT_SIZE  ( 16                                    ) ,\
-        HID_REPORT_COUNT ( 2                                     ) ,\
-        HID_INPUT       ( HID_DATA | HID_VARIABLE | ABS_OR_REL   ) ,\
-        \
-        /* Vertical wheel scroll [-127, 127] */ \
-        HID_USAGE       ( HID_USAGE_DESKTOP_WHEEL                ) ,\
-        HID_LOGICAL_MIN ( 0x81                                   ) ,\
-        HID_LOGICAL_MAX ( 0x7f                                   ) ,\
-        HID_REPORT_COUNT( 1                                      ) ,\
-        HID_REPORT_SIZE ( 8                                      ) ,\
-        HID_INPUT       ( HID_DATA | HID_VARIABLE | HID_RELATIVE ) ,\
-        \
-        /* Horizontal wheel (AC Pan) */ \
-        HID_USAGE_PAGE  ( HID_USAGE_PAGE_CONSUMER                ) ,\
-        HID_LOGICAL_MIN ( 0x81                                   ) ,\
-        HID_LOGICAL_MAX ( 0x7f                                   ) ,\
-        HID_REPORT_COUNT( 1                                      ) ,\
-        HID_REPORT_SIZE ( 8                                      ) ,\
-        HID_USAGE_N     ( HID_USAGE_CONSUMER_AC_PAN, 2           ) ,\
-        HID_INPUT       ( HID_DATA | HID_VARIABLE | HID_RELATIVE ) ,\
-        \
-        /* Mouse mode (0 = absolute, 1 = relative) */ \
-        HID_REPORT_COUNT( 1                                      ), \
-        HID_REPORT_SIZE ( 8                                      ), \
-        HID_INPUT       ( HID_CONSTANT                           ), \
-    HID_COLLECTION_END                                            , \
-  HID_COLLECTION_END \
 
-/* Absolute mouse, range=[0..32767] */
-#define TUD_HID_REPORT_DESC_ABS_MOUSE(...) TUD_HID_REPORT_DESC_MOUSE_COMMON(HID_ABSOLUTE, HID_LOGICAL_MIN(0), __VA_ARGS__)
+/**================================================== *
+ * ================  Output OS Config =============== *
+ * ================================================== *
+ *
+ * Defines OS an output connects to. You will need to worry about this only if you have
+ * multiple desktops and need OS-specific behavior.
+ *
+ * Available options: LINUX, WINDOWS (check main.h for details)
+ *
+ * OUTPUT_A_OS: OS for output A
+ * OUTPUT_B_OS: OS for output B
+ *
+ * */
 
-/* Relative mouse, range=[-32767..32767] */
-#define TUD_HID_REPORT_DESC_MOUSEHELP(...) TUD_HID_REPORT_DESC_MOUSE_COMMON(HID_RELATIVE, HID_LOGICAL_MIN_N(-32767, 2), __VA_ARGS__)
+#define OUTPUT_A_OS WINDOWS
+#define OUTPUT_B_OS LINUX
 
-// Consumer Control Report Descriptor Template
-#define TUD_HID_REPORT_DESC_CONSUMER_CTRL(...) \
-  HID_USAGE_PAGE ( HID_USAGE_PAGE_CONSUMER    )              ,\
-  HID_USAGE      ( HID_USAGE_CONSUMER_CONTROL )              ,\
-  HID_COLLECTION ( HID_COLLECTION_APPLICATION )              ,\
-    /* Report ID if any */\
-    __VA_ARGS__ \
-    HID_LOGICAL_MIN  ( 0x00                                ) ,\
-    HID_LOGICAL_MAX_N( 0x0FFF, 2                           ) ,\
-    HID_USAGE_MIN    ( 0x00                                ) ,\
-    HID_USAGE_MAX_N  ( 0x0FFF, 2                           ) ,\
-    HID_REPORT_SIZE  ( 16                                  ) ,\
-    HID_REPORT_COUNT ( 2                                   ) ,\
-    HID_INPUT        ( HID_DATA | HID_ARRAY | HID_ABSOLUTE ) ,\
-  HID_COLLECTION_END \
 
-// System Control Report Descriptor Template
-#define TUD_HID_REPORT_DESC_SYSTEM_CTRL(...) \
-  HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP    )               ,\
-  HID_USAGE      ( HID_USAGE_DESKTOP_SYSTEM_CONTROL )        ,\
-  HID_COLLECTION ( HID_COLLECTION_APPLICATION )              ,\
-    /* Report ID if any */\
-    __VA_ARGS__ \
-    HID_LOGICAL_MIN ( 0x00                                )  ,\
-    HID_LOGICAL_MAX ( 0xff                                )  ,\
-    HID_REPORT_COUNT( 1                                   )  ,\
-    HID_REPORT_SIZE ( 8                                   )  ,\
-    HID_INPUT        ( HID_DATA | HID_ARRAY | HID_ABSOLUTE ) ,\
-  HID_COLLECTION_END \
+/**================================================== *
+ * =================  Enforce Ports ================= *
+ * ================================================== *
+ *
+ * If enabled, fixes some device incompatibilities by
+ * enforcing keyboard has to be in port A and mouse in port B.
+ *
+ * ENFORCE_PORTS: [0, 1] - 1 means keyboard has to plug in A and mouse in B
+ *                         0 means no such layout is enforced
+ *
+ * */
 
-// Vendor Config Descriptor Template
-#define TUD_HID_REPORT_DESC_VENDOR_CTRL(...) \
-  HID_USAGE_PAGE_N ( HID_USAGE_PAGE_VENDOR, 2 )             ,\
-  HID_USAGE      ( 0x10 )                                   ,\
-  HID_COLLECTION ( HID_COLLECTION_APPLICATION )             ,\
-    /* Report ID if any */\
-    __VA_ARGS__ \
-    HID_LOGICAL_MIN ( 0x80                                )  ,\
-    HID_LOGICAL_MAX ( 0x7f                                )  ,\
-    HID_REPORT_COUNT( 12                                  )  ,\
-    HID_REPORT_SIZE ( 8                                   )  ,\
-    HID_USAGE       ( 0x10                                )  ,\
-    HID_INPUT        ( HID_DATA | HID_ARRAY | HID_ABSOLUTE ) ,\
-    HID_USAGE       ( 0x10                                )  ,\
-    HID_OUTPUT       ( HID_DATA | HID_ARRAY | HID_ABSOLUTE ) ,\
-  HID_COLLECTION_END \
+#define ENFORCE_PORTS 0
 
-#define HID_USAGE_DIGITIZER 0x01
 
-#define TUD_HID_REPORT_DESC_DIGITIZER_PEN(...) \
-HID_USAGE_PAGE ( HID_USAGE_PAGE_DIGITIZER )                 ,\
-HID_USAGE ( HID_USAGE_DIGITIZER )                           ,\
-HID_COLLECTION ( HID_COLLECTION_APPLICATION )               ,\
-  /* Report ID if any */\
-  __VA_ARGS__ \
-  HID_USAGE ( HID_USAGE_DIGITIZER )                         ,\
-  HID_COLLECTION ( HID_COLLECTION_PHYSICAL )                ,\
-    HID_USAGE_PAGE ( HID_USAGE_PAGE_DIGITIZER )             ,\
-    /* Tip Pressure */\
-    HID_USAGE      ( 0x30 )                                 ,\
-    HID_LOGICAL_MIN ( 0x00                                )  ,\
-    HID_LOGICAL_MAX ( 0xff                                )  ,\
-    HID_REPORT_COUNT( 1                                      )  ,\
-    HID_REPORT_SIZE ( 8                                      )  ,\
-    HID_INPUT ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE )    ,\
-    \
-    HID_REPORT_COUNT( 5                                      )  ,\
-    HID_REPORT_SIZE ( 1                                      )  ,\
-    /* In range */\
-    HID_USAGE ( 0x32 )                       ,\
-    /* Tip switch */\
-    HID_USAGE ( 0x42 )                       ,\
-    /* Eraser */\
-    HID_USAGE ( 0x45 )                       ,\
-    /* Barrel switch */\
-    HID_USAGE ( 0x44 )                       ,\
-    /* Invert */\
-    HID_USAGE ( 0x3c )                       ,\
-    HID_INPUT ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE )    ,\
-    \
-    HID_REPORT_COUNT( 3                                      ) ,\
-    HID_REPORT_SIZE ( 1                                      ) ,\
-    HID_INPUT ( HID_CONSTANT )    ,\
-    /* X and Y coordinates */\
-    HID_USAGE_PAGE ( HID_USAGE_PAGE_DESKTOP )               ,\
-    HID_USAGE ( HID_USAGE_DESKTOP_X )                       ,\
-    HID_USAGE ( HID_USAGE_DESKTOP_Y )                       ,\
-    HID_LOGICAL_MIN ( 0 )                                   ,\
-    HID_LOGICAL_MAX_N ( 32767, 2 )                          ,\
-    HID_REPORT_SIZE ( 16 )                                  ,\
-    HID_REPORT_COUNT ( 2 )                                  ,\
-    HID_INPUT ( HID_DATA | HID_VARIABLE | HID_ABSOLUTE)     ,\
-  HID_COLLECTION_END                                        ,\
-HID_COLLECTION_END
+/**================================================== *
+ * =============  Enforce Boot Protocol ============= *
+ * ================================================== *
+ *
+ * If enabled, fixes some device incompatibilities by
+ * enforcing the boot protocol (which is simpler to parse
+ * and with less variation)
+ *
+ * ENFORCE_KEYBOARD_BOOT_PROTOCOL: [0, 1] - 1 means keyboard will forcefully use
+ *                                          the boot protocol
+ *                                        - 0 means no such thing is enforced
+ *
+ * */
 
-#endif /* USB_DESCRIPTORS_H_ */
+#define ENFORCE_KEYBOARD_BOOT_PROTOCOL 0
