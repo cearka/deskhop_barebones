@@ -105,23 +105,6 @@ int board_autoprobe(void) {
 }
 
 
-/* ================================================== *
- * Check if we should boot in configuration mode or not
- * ================================================== */
-
-bool is_config_mode_active(device_t *state) {
-    /* Watchdog registers survive reboot (RP2040 datasheet section 2.8.1.1) */
-    bool is_active = (watchdog_hw->scratch[5] == MAGIC_WORD_1 &&
-                      watchdog_hw->scratch[6] == MAGIC_WORD_2);
-
-    /* Remove, so next reboot it's no longer active */
-    if (is_active)
-        watchdog_hw->scratch[5] = 0;
-
-    reset_config_timer(state);
-
-    return is_active;
-}
 
 
 /* ================================================== *
@@ -218,13 +201,12 @@ void initial_setup(device_t *state) {
     gpio_init(GPIO_LED_PIN);
     gpio_set_dir(GPIO_LED_PIN, GPIO_OUT);
 
-    /* Check if we should boot in configuration mode or not */
-    state->config_mode_active = is_config_mode_active(state);
 
     /* Detect which board we're running on */
     state->board_role = board_autoprobe();
 
     /* Initialize and configure UART */
+    tusb_init();
     serial_init();
 
     /* Initialize keyboard and mouse queues */
@@ -236,6 +218,10 @@ void initial_setup(device_t *state) {
 
     /* Initialize UART queue */
     queue_init(&state->uart_tx_queue, sizeof(uart_packet_t), UART_QUEUE_LENGTH);
+
+    /* >>> NEW: default to gaming mode ON at boot, and sync peer over UART <<< */
+    state->gaming_mode = 1;
+    send_value(state->gaming_mode, GAMING_MODE_MSG);
 
     /* Setup RP2040 Core 1 */
     multicore_reset_core1();
