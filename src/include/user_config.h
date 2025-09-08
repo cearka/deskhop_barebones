@@ -47,8 +47,9 @@
  *
  * */
 
-#define HOTKEY_MODIFIER  KEYBOARD_MODIFIER_LEFTCTRL
-#define HOTKEY_TOGGLE    HID_KEY_CAPS_LOCK
+#define HOTKEY_MODIFIER  0
+#define HOTKEY_TOGGLE    HID_KEY_PAUSE
+// #define HOTKEY_TOGGLE    HID_KEY_F17
 
 /**================================================== *
  * ==============  Mouse Speed Factor  ============== *
@@ -77,103 +78,24 @@
 #define MOUSE_SPEED_B_FACTOR_X 16
 #define MOUSE_SPEED_B_FACTOR_Y 28
 
-#define JUMP_THRESHOLD 0
 
-/* Mouse acceleration */
-#define ENABLE_ACCELERATION 1
 
-/**================================================== *
- * ==============  Screensaver Config  ============== *
- * ================================================== *
- *
- * While this feature is called 'screensaver', it's not actually a
- * screensaver :) Really it's a way to ensure that some sort of mouse
- * activity will be sent to one (or both) outputs when the user has
- * not interacted with that output. This can be used to stop a
- * screensaver or screenlock from activating on the attached computer,
- * or to just watch the mouse pointer bouncing around!
- *
- * When the mode is active on an output, the pointer will jump around
- * the screen like a bouncing-ball in a Pong game (however no click
- * events will be generated, of course).
- *
- * This mode is activated by 'idle time' on a per-output basis; if the
- * mode is enabled for output B, and output B doesn't have any
- * activity for (at least) the specified idle time, then the mode will
- * be activated and will continue until the inactivity time reaches
- * the maximum (if one has been specified). This allows you to stop a
- * screensaver/screenlock from activating while you are still at your
- * desk (but just interacting with the other computer attached to
- * Deskhop), but let it activate if you leave your desk for an
- * extended period of time.
- *
- * Additionally, this mode can be automatically disabled if the output
- * is the currently-active output.
- *
- * If you only set the ENABLED options below, and leave the rest of
- * the defaults in place, then the screensaver mode will activate
- * after 4 minutes (240 seconds) of inactivity, will continue forever,
- * but will only activate on an output that is not currently
- * active.
- *
- * */
-
-/**================================================== *
- *
- * SCREENSAVER_{A|B}_MODE: DISABLED
- *                         PONG
- *                         JITTER
- *
- * */
-
-#define SCREENSAVER_A_MODE DISABLED
-#define SCREENSAVER_B_MODE DISABLED
-
-/**================================================== *
- *
- * SCREENSAVER_{A|B}_IDLE_TIME_SEC: Number of seconds that an output
- * must be inactive before the screensaver mode will be activated.
- *
- * */
-
-#define SCREENSAVER_A_IDLE_TIME_SEC 240
-#define SCREENSAVER_B_IDLE_TIME_SEC 240
-
-/**================================================== *
- *
- * SCREENSAVER_{A|B}_MAX_TIME_SEC: Number of seconds that the screensaver
- * will run on an output before being deactivated. 0 for indefinitely.
- *
- * */
-
-#define SCREENSAVER_A_MAX_TIME_SEC 0
-#define SCREENSAVER_B_MAX_TIME_SEC 0
-
-/**================================================== *
- *
- * SCREENSAVER_{A|B}_ONLY_IF_INACTIVE: [0 or 1] 1 means the
- * screensaver will activate only if the output is inactive.
- *
- * */
-
-#define SCREENSAVER_A_ONLY_IF_INACTIVE 0
-#define SCREENSAVER_B_ONLY_IF_INACTIVE 0
 
 /**================================================== *
  * ================  Output OS Config =============== *
  * ================================================== *
  *
  * Defines OS an output connects to. You will need to worry about this only if you have
- * multiple desktops and one of your outputs is MacOS or Windows.
+ * multiple desktops and need OS-specific behavior.
  *
- * Available options: LINUX, MACOS, WINDOWS, OTHER (check main.h for details)
+ * Available options: LINUX, WINDOWS (check main.h for details)
  *
  * OUTPUT_A_OS: OS for output A
  * OUTPUT_B_OS: OS for output B
  *
  * */
 
-#define OUTPUT_A_OS MACOS
+#define OUTPUT_A_OS WINDOWS
 #define OUTPUT_B_OS LINUX
 
 
