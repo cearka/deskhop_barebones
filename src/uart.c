@@ -65,14 +65,11 @@ const uart_handler_t uart_handler[] = {
     {.type = OUTPUT_SELECT_MSG, .handler = handle_output_select_msg},
 
     /* Box control */
-    {.type = MOUSE_ZOOM_MSG, .handler = handle_mouse_zoom_msg},
     {.type = KBD_SET_REPORT_MSG, .handler = handle_set_report_msg},
-    {.type = SWITCH_LOCK_MSG, .handler = handle_switch_lock_msg},
-    {.type = SYNC_BORDERS_MSG, .handler = handle_sync_borders_msg},
     {.type = FLASH_LED_MSG, .handler = handle_flash_led_msg},
     {.type = GAMING_MODE_MSG, .handler = handle_toggle_gaming_msg},
     {.type = CONSUMER_CONTROL_MSG, .handler = handle_consumer_control_msg},
-    {.type = SCREENSAVER_MSG, .handler = handle_screensaver_msg},
+    {.type = SYSTEM_CONTROL_MSG, .handler = handle_system_control_msg},
 
     /* Config */
     {.type = WIPE_CONFIG_MSG, .handler = handle_wipe_config_msg},
@@ -83,9 +80,6 @@ const uart_handler_t uart_handler[] = {
     {.type = SET_VAL_MSG, .handler = handle_api_msgs},
 
     /* Firmware */
-    {.type = REQUEST_BYTE_MSG, .handler = handle_request_byte_msg},
-    {.type = RESPONSE_BYTE_MSG, .handler = handle_response_byte_msg},
-    {.type = FIRMWARE_UPGRADE_MSG, .handler = handle_fw_upgrade_msg},
 
     {.type = HEARTBEAT_MSG, .handler = handle_heartbeat_msg},
     {.type = PROXY_PACKET_MSG, .handler = handle_proxy_msg},
