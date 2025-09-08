@@ -22,7 +22,6 @@
  *  Individual Task Functions
  *==============================================================================*/
 
-void firmware_upgrade_task(device_t *);
 void heartbeat_output_task(device_t *);
 void kick_watchdog_task(device_t *);
 void led_blinking_task(device_t *);
@@ -31,6 +30,5 @@ void process_hid_queue_task(device_t *);
 void process_kbd_queue_task(device_t *);
 void process_mouse_queue_task(device_t *);
 void process_uart_tx_task(device_t *);
-void screensaver_task(device_t *);
 void usb_device_task(device_t *);
 void usb_host_task(device_t *);
