@@ -31,9 +31,7 @@
  *  Mouse Modes
  *==============================================================================*/
 
-#define ABSOLUTE 0
 #define RELATIVE 1
-#define TOUCH 2
 
 /*==============================================================================
  *  Boolean States
@@ -46,10 +44,7 @@
  *  Numerical Constants
  *==============================================================================*/
 
-#define CONFIG_MODE_TIMEOUT 300000000 // 5 minutes into the future
-#define JITTER_DISTANCE 2
 #define MOUSE_BOOT_REPORT_LEN 4
-#define MOUSE_ZOOM_SCALING_FACTOR 2
 #define NUM_SCREENS 2
 
 /*==============================================================================
