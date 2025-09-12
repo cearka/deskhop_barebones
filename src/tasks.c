@@ -80,6 +80,10 @@ void heartbeat_output_task(device_t *state) {
 void process_hid_queue_task(device_t *state) {
     hid_generic_pkt_t packet;
 
+    /* If NULL MODE is active, don't send any HID reports */
+    if (state->null_mode)
+        return;
+
     if (!queue_try_peek(&state->hid_queue_out, &packet))
         return;
 
