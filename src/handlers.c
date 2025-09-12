@@ -23,6 +23,12 @@ void output_toggle_hotkey_handler(device_t *state, hid_keyboard_report_t *report
     set_active_output(state, state->active_output);
 };
 
+/* This hotkey toggles NULL MODE on/off */
+void null_mode_toggle_hotkey_handler(device_t *state, hid_keyboard_report_t *report) {
+    /* Toggle NULL MODE state */
+    state->null_mode = !state->null_mode;
+};
+
 
 
 
@@ -41,6 +47,11 @@ void handle_keyboard_uart_msg(uart_packet_t *packet, device_t *state) {
     hid_keyboard_report_t *report = (hid_keyboard_report_t *)packet->data;
     hid_keyboard_report_t combined_report;
 
+    /* If NULL MODE is active, drop all keyboard input from other board */
+    if (state->null_mode) {
+        return;
+    }
+
     /* Update the keyboard state for the remote device  */
     update_remote_kbd_state(state, report);
 
@@ -55,6 +66,12 @@ void handle_keyboard_uart_msg(uart_packet_t *packet, device_t *state) {
 /* Function handles received mouse moves from the other board */
 void handle_mouse_abs_uart_msg(uart_packet_t *packet, device_t *state) {
     mouse_report_t *mouse_report = (mouse_report_t *)packet->data;
+
+    /* If NULL MODE is active, drop all mouse input from other board */
+    if (state->null_mode) {
+        return;
+    }
+
     queue_mouse_report(mouse_report, state);
 
     state->mouse_buttons   = mouse_report->buttons;
@@ -98,11 +115,21 @@ void handle_wipe_config_msg(uart_packet_t *packet, device_t *state) {
 
 /* Process consumer control message */
 void handle_consumer_control_msg(uart_packet_t *packet, device_t *state) {
+    /* If NULL MODE is active, drop all consumer control input from other board */
+    if (state->null_mode) {
+        return;
+    }
+
     queue_cc_packet(packet->data, state);
 }
 
 /* Process system control message */
 void handle_system_control_msg(uart_packet_t *packet, device_t *state) {
+    /* If NULL MODE is active, drop all system control input from other board */
+    if (state->null_mode) {
+        return;
+    }
+
     queue_system_packet(packet->data, state);
 }
 
