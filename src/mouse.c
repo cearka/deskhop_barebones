@@ -83,6 +83,11 @@ void process_mouse_report(uint8_t *raw_report, int len, uint8_t itf, hid_interfa
     mouse_values_t values = {0};
     device_t *state = &global_state;
 
+    /* If NULL MODE is active, drop all mouse input */
+    if (state->null_mode) {
+        return;
+    }
+
     /* Interpret the mouse HID report, extract and save values we need. */
     extract_report_values(raw_report, len, state, &values, iface);
 
@@ -102,6 +107,10 @@ void process_mouse_report(uint8_t *raw_report, int len, uint8_t itf, hid_interfa
 
 void process_mouse_queue_task(device_t *state) {
     mouse_report_t report = {0};
+
+    /* If NULL MODE is active, don't send any mouse reports */
+    if (state->null_mode)
+        return;
 
     /* We need to be connected to the host to send messages */
     if (!state->tud_connected)
