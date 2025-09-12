@@ -28,6 +28,7 @@ keyboard_t *get_keyboard(hid_interface_t *iface, uint8_t report_id);
 
 bool key_in_report(uint8_t, const hid_keyboard_report_t *);
 bool check_f17_hotkey(const hid_keyboard_report_t *);
+bool check_null_mode_hotkey(const hid_keyboard_report_t *);
 
 /*==============================================================================
  *  Keyboard State Management
