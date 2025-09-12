@@ -47,9 +47,9 @@
  *
  * */
 
-#define HOTKEY_MODIFIER  0
-#define HOTKEY_TOGGLE    HID_KEY_PAUSE
-// #define HOTKEY_TOGGLE    HID_KEY_F17
+#define HOTKEY_MODIFIER    0
+#define HOTKEY_TOGGLE      HID_KEY_PAUSE //HID_KEY_F17
+#define HOTKEY_NULL_MODE   HID_KEY_HELP  // HELP key for NULL MODE toggle
 
 /**================================================== *
  * ==============  Mouse Speed Factor  ============== *
