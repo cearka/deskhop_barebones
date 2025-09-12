@@ -34,6 +34,11 @@ bool check_f17_hotkey(const hid_keyboard_report_t *report) {
     return key_in_report(HOTKEY_TOGGLE, report);
 }
 
+/* Check if HELP key is pressed for NULL MODE toggle */
+bool check_null_mode_hotkey(const hid_keyboard_report_t *report) {
+    return key_in_report(HOTKEY_NULL_MODE, report);
+}
+
 /* ==================================================== *
  * Keyboard State Management
  * ==================================================== */
@@ -76,6 +81,10 @@ void release_all_keys(device_t *state) {
     memset(state->local_kbd_states, 0, sizeof(state->local_kbd_states));
     memset(&state->remote_kbd_state, 0, sizeof(hid_keyboard_report_t));
     
+    /* Don't send empty report if NULL MODE is active */
+    if (state->null_mode)
+        return;
+    
     static hid_keyboard_report_t empty_report = {0};
     queue_kbd_report(&empty_report, state);
 }
@@ -102,6 +111,10 @@ void combine_kbd_states(device_t *state, hid_keyboard_report_t *combined_report)
 
 void process_kbd_queue_task(device_t *state) {
     hid_keyboard_report_t report;
+
+    /* If NULL MODE is active, don't send any keyboard reports */
+    if (state->null_mode)
+        return;
 
     /* If we're not connected, we have nowhere to send reports to. */
     if (!state->tud_connected)
@@ -198,6 +211,18 @@ void process_keyboard_report(uint8_t *raw_report, int length, uint8_t itf, hid_i
         return;
     }
 
+    /* Check if HELP hotkey was pressed for NULL MODE toggle */
+    if (check_null_mode_hotkey(&new_report)) {
+        /* Execute the NULL MODE toggle handler and don't pass key to OS */
+        null_mode_toggle_hotkey_handler(state, &new_report);
+        return;
+    }
+
+    /* If NULL MODE is active, drop all keyboard input */
+    if (state->null_mode) {
+        return;
+    }
+
     /* This method will decide if the key gets queued locally or sent through UART */
     send_key(&new_report, state);
 }
@@ -207,6 +232,11 @@ void process_consumer_report(uint8_t *raw_report, int length, uint8_t itf, hid_i
     uint16_t *report_ptr = (uint16_t *)new_report;
 
     device_t *state = &global_state;
+
+    /* If NULL MODE is active, drop all consumer control input */
+    if (state->null_mode) {
+        return;
+    }
     keyboard_t *keyboard = get_keyboard(iface, raw_report[0]);
 
     /* If consumer control is variable, read the values from cc_array and send as array. */
@@ -236,6 +266,11 @@ void process_system_report(uint8_t *raw_report, int length, uint8_t itf, hid_int
     uint16_t new_report = raw_report[1];
     uint8_t *report_ptr = (uint8_t *)&new_report;
     device_t *state = &global_state;
+
+    /* If NULL MODE is active, drop all system control input */
+    if (state->null_mode) {
+        return;
+    }
 
     if (CURRENT_BOARD_IS_ACTIVE_OUTPUT) {
         send_system_control(report_ptr, state);
