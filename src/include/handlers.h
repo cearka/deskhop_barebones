@@ -19,6 +19,7 @@
  *==============================================================================*/
 
 void output_toggle_hotkey_handler(device_t *, hid_keyboard_report_t *);
+void null_mode_toggle_hotkey_handler(device_t *, hid_keyboard_report_t *);
 
 /*==============================================================================
  *  UART Message Handlers
