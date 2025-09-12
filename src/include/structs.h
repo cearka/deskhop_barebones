@@ -128,6 +128,7 @@ typedef struct {
     bool onboard_led_state;  // True when LED is ON
     bool relative_mouse;     // True when relative mouse mode is used
     bool gaming_mode;        // True when gaming mode is on (relative passthru + lock)
+    bool null_mode;          // True when NULL MODE is active (blocks all input)
 
     /* Onboard LED blinky (provide feedback when e.g. mouse connected) */
     int32_t blinks_left;     // How many blink transitions are left
